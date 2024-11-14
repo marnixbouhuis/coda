@@ -1,4 +1,7 @@
 # Coda - Graceful Shutdown Manager for Go
+[![Go Reference](https://pkg.go.dev/badge/github.com/marnixbouhuis/coda.svg)](https://pkg.go.dev/github.com/marnixbouhuis/coda)
+[![CI/CD Pipeline](https://github.com/MarnixBouhuis/coda/actions/workflows/cicd.yaml/badge.svg)](https://github.com/MarnixBouhuis/coda/actions/workflows/cicd.yaml)
+
 
 Coda is a Go library that helps manage graceful shutdowns of concurrent applications. It provides a structured way to organize goroutines into groups with dependencies and ensures they shut down in the correct order.
 
