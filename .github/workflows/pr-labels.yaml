@@ -1,0 +1,37 @@
+name: PR labels
+on:
+  pull_request:
+    types: [ opened, labeled, unlabeled, synchronize ]
+permissions:
+  pull-requests: read
+  checks: write
+jobs:
+  check_type_labels:
+    name: Check that PR has type labels
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ github.base_ref == 'main' }}
+        name: Check PR category label
+        uses: danielchabr/pr-labels-checker@7145ecb81a69104f99767cb133bf856e749f7e73 # v3.3
+        with:
+          hasSome: feature,enhancement,fix,bug,chore,documentation,dependencies
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+  check_semver_labels:
+    name: Check that PR has release version labels
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ github.base_ref == 'main' }}
+        name: Check PR version label
+        uses: danielchabr/pr-labels-checker@7145ecb81a69104f99767cb133bf856e749f7e73 # v3.3
+        with:
+          hasSome: major,minor,patch
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+  check_do_not_merge:
+    name: Check that PR does not have do not merge label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR version label
+        uses: danielchabr/pr-labels-checker@7145ecb81a69104f99767cb133bf856e749f7e73 # v3.3
+        with:
+          hasNone: do not merge
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

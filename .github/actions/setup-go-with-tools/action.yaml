@@ -1,0 +1,37 @@
+name: Setup go with tools and dependencies
+description: Setup go, dependencies and tooling. Speed up downloads / installs with caching support. Requires the repo to be checked out, expects a go.mod file in the root of the repo.
+runs:
+  using: composite
+  steps:
+    - name: Setup go
+      uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+      with:
+        go-version-file: "go.mod"
+        cache: false
+    - name: Determine go paths
+      id: vars
+      shell: bash
+      run: |
+        echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+        echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        echo "GOVERSION=$(go env GOVERSION)" >> "$GITHUB_OUTPUT"
+    - name: Make sure modcache is empty before restoring cache
+      shell: bash
+      run: go clean -modcache
+    - name: Restore cache
+      uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      with:
+        path: |
+          ${{ steps.vars.outputs.GOCACHE }}
+          ${{ steps.vars.outputs.GOMODCACHE }}
+        key: go-v1-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.vars.outputs.GOVERSION }}-${{ hashFiles('go.mod') }}
+    - name: Install tools and dependencies
+      shell: bash
+      run: make dependencies install-tools
+    - name: Upload cache
+      uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      with:
+        path: |
+          ${{ steps.vars.outputs.GOCACHE }}
+          ${{ steps.vars.outputs.GOMODCACHE }}
+        key: go-v1-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.vars.outputs.GOVERSION }}-${{ hashFiles('go.mod') }}
