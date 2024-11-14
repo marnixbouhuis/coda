@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+on:
+  push: {}
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+      - name: Setup go and tooling
+        uses: ./.github/actions/setup-go-with-tools
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: none
+          install-mode: none # golangci-lint is installed using the setup tooling step above. This ensures we use the same binary version in the CI as locally.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+      - name: Setup go and tooling
+        uses: ./.github/actions/setup-go-with-tools
+      - name: Run tests
+        shell: bash
+        run: |
+          set -o pipefail
+          go test -json ./... | tee test-results.json
+      - name: Report test results
+        if: always()
+        uses: guyarb/golang-test-annotations@2941118d7ef622b1b3771d1ff6eae9e90659eb26 # v0.8.0
+        with:
+          test-results: test-results.json
+          package-name: github.com/marnixbouhuis/confpb
