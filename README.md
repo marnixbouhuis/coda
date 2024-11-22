@@ -212,6 +212,9 @@ Built-in loggers:
 - `NewNoopLogger()` - Discards all logs (default)
 - `NewStdLogger(logger *log.Logger)` - Adapts standard library logger
 
+Loggers available as external module:
+- [https://github.com/marnixbouhuis/coda-zap](https://github.com/marnixbouhuis/coda-zap)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
