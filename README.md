@@ -141,6 +141,8 @@ func Example() {
 
 	serverGroup := coda.Must(sd.NewGroup("server", []*coda.Group{workerGroup, dbGroup}))
 	serverGroup.Go(func(ctx context.Context, ready func()) error {
+		ready()
+
 		mux := http.NewServeMux()
 		srv := &http.Server{
 			Addr:         ":8080",
@@ -150,24 +152,25 @@ func Example() {
 		}
 
 		mux.HandleFunc("/demo", func(w http.ResponseWriter, _ *http.Request) {
-			defer func() {
-				_ = r.Body.Close()
-			}()
 			w.WriteHeader(http.StatusOK)
 		})
 
 		go func() {
-			if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-				log.Printf("HTTP server error: %v", err)
+			<-ctx.Done()
+
+			shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second*30)
+			defer cancel()
+
+			if err := srv.Shutdown(shutdownCtx); err != nil {
+				log.Printf("Failed to stop HTTP server gracefully: %v", err)
+				sd.StopWithError(err)
 			}
 		}()
 
-		ready()
-		<-ctx.Done()
-
-		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-		defer cancel()
-		return srv.Shutdown(shutdownCtx)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
 	})
 
 	go func() {
