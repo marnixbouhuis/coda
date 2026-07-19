@@ -214,6 +214,7 @@ Built-in loggers:
 
 Loggers available as external module:
 - [https://github.com/marnixbouhuis/coda-zap](https://github.com/marnixbouhuis/coda-zap)
+- [https://github.com/marnixbouhuis/coda-slog](https://github.com/marnixbouhuis/coda-slog)
 
 ## License
 
