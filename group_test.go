@@ -221,6 +221,35 @@ func TestGroup(t *testing.T) {
 		assert.NoError(t, s.Wait())
 	})
 
+	t.Run("it should not hang if we crash before calling ready while using withblock", func(t *testing.T) {
+		t.Parallel()
+
+		completeCh := make(chan struct{})
+		go func() {
+			s := coda.NewShutdown()
+			g, err := s.NewGroup("group", nil)
+			//nolint:testifylint // this is a test
+			require.NoError(t, err)
+
+			testErr := errors.New("some error")
+			f := func(_ context.Context, _ func()) error {
+				// No call to ready()
+				return testErr
+			}
+
+			g.Go(f, coda.WithBlock(true))
+			assert.ErrorIs(t, s.Wait(), testErr)
+
+			close(completeCh)
+		}()
+
+		select {
+		case <-completeCh:
+		case <-time.After(time.Second * 2):
+			t.Fatal("Test did not complete, did something hang / deadlock?")
+		}
+	})
+
 	t.Run("it should crash the shutdown handler if the goroutine errors and this is enabled", func(t *testing.T) {
 		t.Parallel()
 
