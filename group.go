@@ -126,6 +126,10 @@ func (g *Group) Go(fn GroupFunc, opts ...GroupGoroutineOption) {
 	go func() {
 		defer g.wg.Done()
 
+		// Always mark as ready when we're done here, otherwise we might deadlock when using WithBlock() if we crash
+		// before readiness is signaled.
+		defer ready()
+
 		if err := fn(g.ctx, ready); err != nil {
 			if options.crashOnError {
 				g.shutdown.options.logger.Error(fmt.Sprintf("Goroutine in group \"%s\" returned error: %s", g.name, err.Error()))
